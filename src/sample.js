@@ -8,7 +8,6 @@ const { authenticate } = require("@google-cloud/local-auth");
 // initialize the Youtube API library
 const youtube = google.youtube("v3");
 
-// a very simple example of searching for youtube videos
 async function runSample() {
   const auth = await authenticate({
     keyfilePath: path.join(__dirname, "../oauth2.keys.json"),
@@ -21,16 +20,29 @@ async function runSample() {
 
   const res = await youtube.captions.list({
     part: "id,snippet",
-    videoId: "PN8kS1YXoxk",
+    videoId: "Hb75upkbzq8",
   });
-  console.log("Check ID"); //delete please
-  console.log(res.data);
+  console.log("Checking ID"); //delete please
+  const captionTrack = res.data.items[0];
+
+  //if captions aren't available yet, run the code again.
+  const findCaptionTrack = (captions) => {
+    if (!captions) {
+      console.log("Captions are still being generated.");
+      setTimeout(() => {
+        findCaptionTrack(captions);
+      }, 30000);
+    }
+  };
+
+  findCaptionTrack(captionTrack);
 
   const downloadCaptions = await youtube.captions.download({
-    id: res.data.items[0].id,
+    id: captionTrack.id,
     tfmt: "srt",
   });
-  console.log("Download subs"); //delete please
+
+  console.log("Downloading subs:"); //delete please
   console.log(downloadCaptions.data); //delete please
 
   fs.writeFile("captions.srt", downloadCaptions.data, (err) => {
